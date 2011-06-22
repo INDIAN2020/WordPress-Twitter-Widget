@@ -72,10 +72,11 @@ class JW_Twitter_Widget extends WP_Widget {
         
         if ( $data->tweets ) {
             echo $before_widget;
-            echo $before_title;
-            echo $title;
-            echo $after_title;
-            echo '<ul><li>' . implode('</li><li>', $data->tweets) . '</li></ul>';
+		echo $before_title;
+		    echo $title;
+		echo $after_title;
+		
+		echo '<ul><li>' . implode('</li><li>', $data->tweets) . '</li></ul>';
             echo $after_widget;
         }
     }
@@ -94,7 +95,6 @@ class JW_Twitter_Widget extends WP_Widget {
             $data->num_tweets = $num_tweets;
             
             if ( !empty($tweets) ) {
-
                 foreach($tweets as $tweet) {
                     if ( $num_tweets-- === 0 ) break;
                     $data->tweets[] = $this->filter_tweet( $tweet->text );
