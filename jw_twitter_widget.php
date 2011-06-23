@@ -47,11 +47,11 @@ class JW_Twitter_Widget extends WP_Widget {
 	    <label for="<?php echo $this->get_field_id('tweet_count'); ?>">
 		Number of Tweets to Retrieve:
 	    </label>
-	    
+	     
 	    <input
 		type="number"
 		class="widefat"
-		style="width: 80px;"
+		style="width: 40px;"
 		id="<?php echo $this->get_field_id('tweet_count');?>"
 		name="<?php echo $this->get_field_name('tweet_count');?>"
 		min="1"
@@ -126,7 +126,8 @@ class JW_Twitter_Widget extends WP_Widget {
 }
 
 // Here we gooooooo! (Mario voice)
-add_action('widgets_init', function() {
+add_action('widgets_init', 'register_jw_twitter_widget');
+function register_jw_twitter_widget()
+{
     register_widget('JW_Twitter_Widget');
-});
- 
+}
