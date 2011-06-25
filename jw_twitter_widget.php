@@ -11,8 +11,8 @@
 class JW_Twitter_Widget extends WP_Widget {
     function __construct() {
         $params = array(
-        'description' => 'Display and cache recent tweets to your readers.',
-        'name' => 'Twitter'
+	    'description' => 'Display and cache recent tweets to your readers.',
+	    'name' => 'Twitter'
         );
         
         // id, name, params
@@ -20,7 +20,6 @@ class JW_Twitter_Widget extends WP_Widget {
     }
     
     public function form($instance) {
-        // $instance = title, twitter username, num_tweets
         extract($instance);
         ?>
         
@@ -30,7 +29,7 @@ class JW_Twitter_Widget extends WP_Widget {
 		class="widefat"
 		id="<?php echo $this->get_field_id('title'); ?>"
 		name="<?php echo $this->get_field_name('title'); ?>"
-		value="<?php if ( isset($title) ) echo esc_attr($title); ?>"
+		value="<?php if ( isset($title) ) echo esc_attr($title); ?>" />
         </p>
         
         <p>
@@ -63,14 +62,13 @@ class JW_Twitter_Widget extends WP_Widget {
     
     // What the visitor sees...
     public function widget($args, $instance) {
-        extract($instance);
+	extract($instance);
         extract( $args );
         
         if ( empty($title) ) $title = 'Recent Tweets';
         
         $data = $this->fetch_tweets($tweet_count, $username);
-        
-        if ( $data->tweets ) {
+        if ( isset($data->tweets) ) {
             echo $before_widget;
 		echo $before_title;
 		    echo $title;
@@ -87,19 +85,21 @@ class JW_Twitter_Widget extends WP_Widget {
         
         $tweets = get_transient('recent_tweets_widget');
         if ( !$tweets ) {
+	    
             $tweets = wp_remote_get("http://twitter.com/statuses/user_timeline/$username.json");
 	    $tweets = json_decode($tweets['body']);
+
+	    // An error retrieving from the Twitter API?
+	    if ( isset($tweets->error) ) return;
 	    
             $data = new StdClass();
             $data->username = $username;
             $data->num_tweets = $num_tweets;
             
-            if ( !empty($tweets) ) {
-                foreach($tweets as $tweet) {
-                    if ( $num_tweets-- === 0 ) break;
-                    $data->tweets[] = $this->filter_tweet( $tweet->text );
-                }
-            }
+	    foreach($tweets as $tweet) {
+		if ( $num_tweets-- === 0 ) break;
+		$data->tweets[] = $this->filter_tweet( $tweet->text );
+	    }
             
             set_transient('recent_tweets_widget', $data, 60 * 5); // five minutes
             return $data;
