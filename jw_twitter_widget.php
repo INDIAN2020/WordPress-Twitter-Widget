@@ -12,7 +12,7 @@ class JW_Twitter_Widget extends WP_Widget {
     function __construct() {
         $params = array(
 	    'description' => 'Display and cache recent tweets to your readers.',
-	    'name' => 'Twitter'
+	    'name' => 'Display Your Tweets'
         );
         
         // id, name, params
@@ -24,7 +24,7 @@ class JW_Twitter_Widget extends WP_Widget {
         ?>
         
         <p>
-	    <label for="">Title: </label>
+	    <label for="<?php echo $this->get_field_id('title');?>">Title: </label>
 	    <input type="text"
 		class="widefat"
 		id="<?php echo $this->get_field_id('title'); ?>"
@@ -67,8 +67,8 @@ class JW_Twitter_Widget extends WP_Widget {
         
         if ( empty($title) ) $title = 'Recent Tweets';
         
-        $data = $this->fetch_tweets($tweet_count, $username);
-        if ( isset($data->tweets) ) {
+        $data = $this->twitter($tweet_count, $username);
+        if ( false !== $data && isset($data->tweets) ) {
             echo $before_widget;
 		echo $before_title;
 		    echo $title;
@@ -79,39 +79,41 @@ class JW_Twitter_Widget extends WP_Widget {
         }
     }
     
-    private function fetch_tweets($num_tweets, $username)
+    private function twitter($tweet_count, $username)
     {
+	//delete_transient('recent_tweets_widget'); die();
         if ( empty($username) ) return;
         
         $tweets = get_transient('recent_tweets_widget');
         if ( !$tweets ) {
-	    
-            $tweets = wp_remote_get("http://twitter.com/statuses/user_timeline/$username.json");
-	    $tweets = json_decode($tweets['body']);
-
-	    // An error retrieving from the Twitter API?
-	    if ( isset($tweets->error) ) return;
-	    
-            $data = new StdClass();
-            $data->username = $username;
-            $data->num_tweets = $num_tweets;
-            
-	    foreach($tweets as $tweet) {
-		if ( $num_tweets-- === 0 ) break;
-		$data->tweets[] = $this->filter_tweet( $tweet->text );
-	    }
-            
-            set_transient('recent_tweets_widget', $data, 60 * 5); // five minutes
-            return $data;
-        }
-        else {
-            // what if the username was changed. In that case, fetch new tweets.
-            if ( $tweets->username !== $username || $tweets->num_tweets !== $num_tweets ) {
-                delete_transient('recent_tweets_widget');
-                $this->fetch_tweets($num_tweets, $username);
-            }
+	    return $this->fetch_tweets($tweet_count, $username);
+	}
+	// what if the username was changed. In that case, fetch new tweets.
+        elseif ( $tweets->username !== $username || $tweets->tweet_count !== $tweet_count ) {
+                return $this->fetch_tweets($tweet_count, $username);
         }
         return $tweets;
+    }
+    
+    private function fetch_tweets($tweet_count, $username)
+    {
+	$tweets = wp_remote_get("http://twitter.com/statuses/user_timeline/$username.json");
+	$tweets = json_decode($tweets['body']);
+	
+	// An error retrieving from the Twitter API?
+	if ( isset($tweets->error) ) return false;
+	
+	$data = new StdClass();
+	$data->username = $username;
+	$data->tweet_count = $tweet_count;
+	
+	foreach($tweets as $tweet) {
+	    if ( $tweet_count-- === 0 ) break;
+	    $data->tweets[] = $this->filter_tweet( $tweet->text );
+	}
+	
+	set_transient('recent_tweets_widget', $data, 60 * 5); // five minutes
+	return $data;
     }
 
     private function filter_tweet($tweet)
