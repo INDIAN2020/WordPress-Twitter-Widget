@@ -81,17 +81,15 @@ class JW_Twitter_Widget extends WP_Widget {
     
     private function twitter($tweet_count, $username)
     {
-	//delete_transient('recent_tweets_widget'); die();
         if ( empty($username) ) return;
         
         $tweets = get_transient('recent_tweets_widget');
-        if ( !$tweets ) {
+        if ( !$tweets ||
+	    $tweets->username !== $username ||
+	    $tweets->tweet_count !== $tweet_count )
+	{
 	    return $this->fetch_tweets($tweet_count, $username);
 	}
-	// what if the username was changed. In that case, fetch new tweets.
-        elseif ( $tweets->username !== $username || $tweets->tweet_count !== $tweet_count ) {
-                return $this->fetch_tweets($tweet_count, $username);
-        }
         return $tweets;
     }
     
